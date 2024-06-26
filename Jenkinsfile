@@ -3,13 +3,13 @@ pipeline {
 
     environment {
         SONARQUBE_SERVER_URL = 'http://sonarqube:9000'
-        SONARQUBE_CREDENTIALS = 'd0f89514-ca8f-4d5b-9403-a0244f83aa8c' 
+        SONARQUBE_CREDENTIALS = 'sqa_04210127508e2aa63c7b5ec561e70893c2ad7da5' // Replace with your SonarQube token ID from Jenkins credentials
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/s24582PJ/devops12.2.git' 
+                git 'https://github.com/s24582PJ/devops12.2.git' // Replace with your repository URL
             }
         }
 
@@ -24,10 +24,12 @@ pipeline {
                 sudo make
                 sudo cp googletest/lib/libgtest.a googletest/lib/libgtest_main.a /usr/lib
                 '''
+                // Install gcovr
                 sh 'sudo apt-get install -y gcovr'
                  sh 'sudo apt-get install -y cppcheck'
             script {
                     def scannerHome = tool name: 'SonarScanner'
+                    // Add SonarScanner bin directory to PATH
                     env.PATH = "${scannerHome}/bin:${env.PATH}"
                 }
 
@@ -53,16 +55,20 @@ pipeline {
         stage('Code Coverage') {
             steps {
                 script {
+                    // Clean and rebuild with coverage flags
                    sh 'cd build && cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_FLAGS="-fprofile-arcs -ftest-coverage" ..'
                    sh 'cd build && make clean && make'
 
+                    // Ensure coverage_report directory exists
                     sh 'mkdir -p coverage_report'
 
+                    // Generate coverage reports using gcovr
                     sh '''
                     cd build
                     gcovr --root .. --html ../coverage_report/coverage.html
                     '''
 
+                    // Publish HTML report in Jenkins
                     publishHTML(target: [
                         reportName: 'Code Coverage',
                         reportDir: 'coverage_report',
